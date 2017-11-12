@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
+# Depends on `commander` gem
 require 'commander/import'
-require 'color'
 
 SHAPES = %w(circle square)
 
@@ -32,6 +32,7 @@ command :setup do |c|
 		icon_name = args.first
 		link_name = options.rename || icon_name
 		`git checkout -b #{link_name}` if options.branch && `git branch --list #{link_name}`.empty?
+		Dir.mkdir('ln') unless File.directory?('ln')
 		SHAPES.each do |shape|
 			`ln -s ../icons/#{shape}/48/#{icon_name}.svg ln/#{link_name}.#{shape}.svg`
 		end
