@@ -27,7 +27,24 @@ class Circle(Shape):
 		return iter((self.o, self.r))
 
 	def __intersect__(self, other):
+		if isinstance(other, Circle):
+			return self.__intersect_circle(other)
 		return NotImplemented
+
+	def __intersect_circle(self, circle):
+		p0, r0 = self
+		p1, r1 = circle
+		q = p1 - p0
+		d = abs(q)
+		if d > r0 + r1 or d < abs(r0 - r1) or d == 0:
+			return tuple()
+		a = (r0**2 - r1**2 + d**2) / (2*d)
+		h = sqrt(r0**2 - a**2)
+		p2 = p0 + a*q / d
+		qq = Point(-q.y, q.x)
+		if h == 0:
+			return (p2,)
+		return (p2 + h*qq/d, p2 - h*qq/d)
 
 
 class Line(Shape):

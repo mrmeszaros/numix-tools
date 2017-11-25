@@ -25,6 +25,18 @@ class ShapeTest(TestCase):
 		# symmetric
 		self.assertEqual(set(intersect(L(o, p1), c)), set(intersect(c, L(p1, o))))
 
+	def test_circle_circle_intersection(self):
+		c1 = C(P(0, -4), 5)
+		c2 = C(P(0, 4), 5)
+		# secant
+		self.assertEqual({P(3, 0), P(-3, 0)}, set(intersect(c1, c2)))
+		c3 = C(P(0, 6), 5)
+		# tangent
+		self.assertEqual({P(0, 1)}, set(intersect(c1, c3)))
+		c4 = C(P(0, -4), 3)
+		# nonsecant
+		self.assertEqual(set(), set(intersect(c1, c4)))
+
 
 if __name__ == '__main__':
 	main()
