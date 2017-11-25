@@ -62,14 +62,14 @@ class Line(Shape):
 		return NotImplemented
 
 	def __intersect_circle(self, circle):
-		p1, p2 = self
+		p0, p1 = self
 		c, r = circle
+		p0 = p0 - c
 		p1 = p1 - c
-		p2 = p2 - c
-		dx = p2.x - p1.x
-		dy = p2.y - p1.y
+		dx = p1.x - p0.x
+		dy = p1.y - p0.y
 		dr2 = dx*dx + dy*dy
-		D = p1.x*p2.y - p2.x*p1.y
+		D = p0.x*p1.y - p1.x*p0.y
 		discriminant = r*r*dr2 - D*D
 		if discriminant < 0:
 			return tuple()
@@ -81,18 +81,18 @@ class Line(Shape):
 		return (Point(D*dy - xdiff, -D*dx - ydiff) / dr2 + c, Point(D*dy + xdiff, -D*dx + ydiff) / dr2 + c)
 
 	def __intersect_line(self, line):
-		# helper method
-		def abc(p, q):
-			x1, y1 = p
-			x2, y2 = q
-			a = y2 - y1
-			b = x1 - x2
-			c = a*x1 + b*y1
-			return a, b, c
-
-		a1, b1, c1 = abc(*self)
-		a2, b2, c2 = abc(*line)
+		a1, b1, c1 = self.__params()
+		a2, b2, c2 = line.__params()
 		det = a1*b2 - a2*b1
 		if abs(det) == 0:
 			return None
 		return Point(b2*c1 - b1*c2, a1*c2 - a2*c1) / det
+
+	def __params(self):
+		p0, p1 = self
+		x1, y1 = p0
+		x2, y2 = p1
+		a = y2 - y1
+		b = x1 - x2
+		c = a*x1 + b*y1
+		return a, b, c
