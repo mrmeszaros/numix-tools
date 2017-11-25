@@ -38,6 +38,8 @@ class Line(Shape):
 		return iter(self._data)
 
 	def __intersect__(self, other):
+		if isinstance(other, Line):
+			return self.__intersect_line(other)
 		if isinstance(other, Circle):
 			return self.__intersect_circle(other)
 		return NotImplemented
@@ -60,3 +62,20 @@ class Line(Shape):
 		xdiff = copysign(dx*sd, dy*dx)
 		ydiff = abs(dy)*sd
 		return (Point(D*dy - xdiff, -D*dx - ydiff) / dr2 + c, Point(D*dy + xdiff, -D*dx + ydiff) / dr2 + c)
+
+	def __intersect_line(self, line):
+		# helper method
+		def abc(p, q):
+			x1, y1 = p
+			x2, y2 = q
+			a = y2 - y1
+			b = x1 - x2
+			c = a*x1 + b*y1
+			return a, b, c
+
+		a1, b1, c1 = abc(*self)
+		a2, b2, c2 = abc(*line)
+		det = a1*b2 - a2*b1
+		if abs(det) == 0:
+			return None
+		return Point(b2*c1 - b1*c2, a1*c2 - a2*c1) / det
