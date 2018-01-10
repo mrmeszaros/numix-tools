@@ -50,6 +50,10 @@ class PointTest(TestCase):
 	def test_hash(self):
 		self.assertEqual(hash(o), hash(Point(0, 0)))
 
+	def test_str_and_repr(self):
+		self.assertEqual('1.2,3', str(Point(1.2, 3)))
+		self.assertEqual('1.2,3', repr(Point(1.2, 3)))
+
 
 if __name__ == '__main__':
 	main()

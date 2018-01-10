@@ -35,3 +35,9 @@ class Point(tuple):
 
 	def __truediv__(self, scalar):
 		return Point(self.x / scalar, self.y / scalar)
+
+	def __str__(self):
+		return '{p.x},{p.y}'.format(p=self)
+
+	def __repr__(self):
+		return str(self)
