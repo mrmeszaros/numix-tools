@@ -56,7 +56,9 @@ command :setup do |c|
 		`git checkout -b #{link_name}` if options.branch && `git branch --list #{link_name}`.empty?
 		Dir.mkdir('ln') unless File.directory?('ln')
 		SHAPES.each do |shape|
-			`ln -s ../icons/#{shape}/48/#{icon_name}.svg ln/#{link_name}.#{shape}.svg`
+			target = "icons/#{shape}/48/#{icon_name}.svg"
+			`cp templates/#{shape}/48.svg #{target}` unless File.file? target
+			`ln -s ../#{target} ln/#{link_name}.#{shape}.svg`
 		end
 		notify_send 'Setup finished!' if options.notify
 	end
