@@ -68,31 +68,49 @@ end
 command :render do |c|
 	c.syntax = 'numix render ICON_NAME ...'
 	c.description = 'Render svg icons to raster images (png)'
-	c.option '-s', '--size SIZE', Integer, 'Specify the resolution of the raster.'
+	c.option '-s', '--size SIZES', Array, 'Specify the resolution of the raster.'
 	c.option '-b', '--bundle', 'Create bundle images with all the shapes'
 	c.option '-q', '--quiet', 'Diable all unnecessary program output'
-	c.action do |args, options|
-		options.default :size => 48
-		args.each do |icon_name|
+	c.action do |icon_names, options|
+		options.default :size => [48]
+		sizes = options.size.map(&:to_i).sort.reverse
+		icon_names.each do |icon_name|
+
 			puts "Rendering '#{icon_name}' ..." unless options.quiet
-			pngs = []
-			SHAPES.each do |shape|
-				svg = "icons/#{shape}/48/#{icon_name}.svg"
-				png = "#{icon_name}.#{shape}.#{options.size}.png"
-				if File.file? svg
-					`inkscape #{svg} -e #{png} -w #{options.size}`
-					puts "... [DONE] #{png}" unless options.quiet
-					pngs.push png
-				else
-					puts "... [MISS] #{svg}" unless options.quiet
+			pngs = sizes.map{ |s| [s, []] }.to_h
+			sizes.each do |size|
+				SHAPES.each do |shape|
+					svg = "icons/#{shape}/48/#{icon_name}.svg"
+					png = "#{icon_name}.#{shape}.#{size}.png"
+					if File.file? svg
+						`inkscape #{svg} -e #{png} -w #{size}`
+						puts "... [DONE] #{png}" unless options.quiet
+						pngs[size].push png
+					else
+						puts "... [MISS] #{svg}" unless options.quiet
+					end
 				end
 			end
+
 			if options.bundle
-				source = pngs.join(' ')
-				target = "#{icon_name}.#{options.size}.png"
-				`convert #{source} -rotate 90 -append -rotate -90 #{target}`
-				puts "... [BUNDLE] #{target}" unless options.quiet
+				parts = []
+				sizes.each do |size|
+					source = pngs[size].join(' ')
+					target = "#{icon_name}.#{size}.png"
+					padding = (sizes.max - size) / 2.0
+					`convert #{source} -bordercolor none -border #{padding}x4 -rotate 90 -append -rotate -90 #{target}`
+					puts "... [BUNDLE] #{target}" unless options.quiet
+					parts.push target
+				end
+				if 1 < sizes.size
+					source = parts.join(' ')
+					target = "#{icon_name}.#{sizes.join('-')}.png"
+					`convert #{source} -append #{target}`
+					puts "... [BUNDLE] #{target}" unless options.quiet
+					`rm #{source}` if options
+				end
 			end
+
 		end
 		notify_send 'Rendering finished!' if options.notify
 	end
