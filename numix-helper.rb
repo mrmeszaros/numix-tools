@@ -23,8 +23,8 @@ global_option('-n', '--notify', 'Send OS notification when the command finished'
 default_command :help
 
 
-def show_color color
-	puts "| ##{color.to_rgb.hex} | #{color.to_hsl.css_hsl}"
+def puts_color color, fmt
+	puts fmt % {rgb: color.to_rgb.hex, hsl: color.css_hsl}
 end
 
 def calc_value base, change
@@ -40,14 +40,16 @@ command :color do |c|
 	c.option '-H', '--hue=H', String, 'Rotate the hue by the given amount (0-360)'
 	c.option '-S', '--saturation=S', String, 'Change the saturation by the given amount (0-100)'
 	c.option '-L', '--luminosity=L', String, 'Change the luminosity by the given amount (0-100)'
+	c.option '-f', '--format=FORMAT', String, 'Format the output with the given ruby format string'
 	c.action do |args, options|
+		options.default :format => '| #%{rgb} | %{hsl} |'
 		args.each do |color|
 			hsl = Color::RGB.by_hex(color).to_hsl
-			show_color hsl
+			puts_color hsl, options.format
 			hsl.hue = calc_value(hsl.hue, options.hue) if options.hue
 			hsl.saturation = calc_value(hsl.saturation, options.saturation) if options.saturation
 			hsl.luminosity = calc_value(hsl.luminosity, options.luminosity) if options.luminosity
-			show_color hsl
+			puts_color hsl, options.format
 		end
 	end
 end
