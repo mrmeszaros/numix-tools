@@ -27,18 +27,26 @@ def show_color color
 	puts "| ##{color.to_rgb.hex} | #{color.to_hsl.css_hsl}"
 end
 
+def calc_value base, change
+	if change =~ /^[+-]/
+		base + change.to_f
+	else
+		change.to_f
+	end
+end
+
 command :color do |c|
-	c.syntax = 'numix color HEX_COLORS'
-	c.option '-H', '--hue=H', Float, 'Rotate the hue by the given amount (0-360)'
-	c.option '-S', '--saturation=S', Float, 'Change the saturation by the given amount (0-100)'
-	c.option '-L', '--luminosity=L', Float, 'Change the luminosity by the given amount (0-100)'
+	c.syntax = 'numix color HEX_COLORS...'
+	c.option '-H', '--hue=H', String, 'Rotate the hue by the given amount (0-360)'
+	c.option '-S', '--saturation=S', String, 'Change the saturation by the given amount (0-100)'
+	c.option '-L', '--luminosity=L', String, 'Change the luminosity by the given amount (0-100)'
 	c.action do |args, options|
 		args.each do |color|
 			hsl = Color::RGB.by_hex(color).to_hsl
 			show_color hsl
-			hsl.hue += options.hue if options.hue
-			hsl.saturation += options.saturation if options.saturation
-			hsl.luminosity += options.luminosity if options.luminosity
+			hsl.hue = calc_value(hsl.hue, options.hue) if options.hue
+			hsl.saturation = calc_value(hsl.saturation, options.saturation) if options.saturation
+			hsl.luminosity = calc_value(hsl.luminosity, options.luminosity) if options.luminosity
 			show_color hsl
 		end
 	end
