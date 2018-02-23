@@ -52,6 +52,25 @@ command :color do |c|
 	end
 end
 
+command :blend do |c|
+	c.syntax = 'numix blend COLOR1 COLOR2 [options]'
+	c.option '-f', '--format=FORMAT', String, 'Format the output with the given ruby format string'
+	c.option '-r', '--ratio=RATIO', Array, 'Use given ratios to blend the colors'
+	c.action do |args, options|
+		options.default :format => '| %{r} | %{rgb} | %{hsl} |', :ratio => [0.5]
+		if args.size != 2
+			puts "[ERROR]: The blend command expects exactly 2 arguments!"
+		else
+			c1 = Color::RGB.by_hex(args[0]).to_hsl
+			c2 = Color::RGB.by_hex(args[1]).to_hsl
+			options.ratio.each do |r|
+				mixture = c1.mix_with(c2, r.to_f)
+				puts options.format % {r: r, rgb: mixture.to_rgb.hex, hsl: mixture.css_hsl}
+			end
+		end
+	end
+end
+
 
 command :setup do |c|
 	c.syntax = 'numix setup ICON_NAME [options]'
