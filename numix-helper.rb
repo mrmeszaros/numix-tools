@@ -177,20 +177,24 @@ end
 
 
 command :render do |c|
-	c.syntax = 'numix render ICON_NAME ...'
+	c.syntax = 'numix render ICON_NAME... [options]'
 	c.description = 'Render svg icons to raster images (png)'
 	c.option '-s', '--size SIZES', Array, 'Specify the resolution of the raster.'
+	c.option '-S', '--shapes SHAPES', Array, 'Specify the shapes for which to render.'
 	c.option '-b', '--bundle', 'Create bundle images with all the shapes'
 	c.option '-q', '--quiet', 'Diable all unnecessary program output'
 	c.action do |icon_names, options|
-		options.default :size => [48]
+		options.default :size => [48], :shapes => SHAPES
 		sizes = options.size.map(&:to_i).sort.reverse
+
+		icon_names = [`git rev-parse --abbrev-ref HEAD`.strip] if icon_names.size < 1
+
 		icon_names.each do |icon_name|
 
 			puts "Rendering '#{icon_name}' ..." unless options.quiet
 			pngs = sizes.map{ |s| [s, []] }.to_h
 			sizes.each do |size|
-				SHAPES.each do |shape|
+				options.shapes.each do |shape|
 					svg = "icons/#{shape}/48/#{icon_name}.svg"
 					png = "#{icon_name}.#{shape}.#{size}.png"
 					if File.file? svg
