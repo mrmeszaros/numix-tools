@@ -1,8 +1,10 @@
 #!/usr/bin/env ruby
 
 # Dependencies:
+# - json
 # - color
 # - commander
+require 'json'
 require 'color'
 require 'commander/import'
 
@@ -90,6 +92,86 @@ command :setup do |c|
 			`ln -s ../#{target} ln/#{link_name}.#{shape}.svg`
 		end
 		notify_send 'Setup finished!' if options.notify
+	end
+end
+
+
+DATA_JSON = 'data.json'
+
+class Hash
+	def sorted!
+		self.keys.sort_by{ |k| k.downcase }.each { |k| self[k] = self.delete k }
+	end
+end
+
+class Array
+	def insert_sorted item
+		idx = (0...self.size).bsearch{ |i| item.downcase < self[i].downcase } || self.size
+		self.insert idx, item
+	end
+end
+
+class IconEntry
+	def initialize entry
+		@hash = entry
+	end
+
+	def linux icon
+		unless @hash.include? 'linux'
+			@hash['linux'] = { 'root' => icon }
+			@hash.sorted!
+		else
+			@hash['linux']['symlinks'] = [] unless @hash['linux'].include? 'symlinks'
+			@hash['linux']['symlinks'].insert_sorted icon
+		end
+	end
+
+	def android icon
+		unless @hash.include? 'android'
+			@hash['android'] = []
+			@hash.sorted!
+		end
+		@hash['android'].insert_sorted icon
+	end
+end
+
+class IconData
+	def initialize file
+		@file = file
+		@data = JSON[File.read file]
+	end
+
+	def [] icon
+		@data[icon] = {} unless @data.include? icon
+		IconEntry.new @data[icon]
+	end
+
+	def rename old_name, new_name
+		@data[new_name] = @data.delete old_name
+	end
+
+	def save!
+		@data = @data.sort_by{ |k,v| k.downcase }.to_h
+		json = JSON.pretty_generate @data, indent: "\t"
+		File.open(@file, 'w') { |file| file.write(json + "\n") }
+	end
+end
+
+command :data do |c|
+	c.syntax = 'numix data ICON_NAME [options]'
+	c.description = 'Add data entry for the icon'
+	c.option '-l', '--linux=ENTRY', String, 'Add linux entry (root or symlink)'
+	c.option '-a', '--android=ENTRY', String, 'Add android entry (root or symlink)'
+	c.option '-r', '--rename=ICON_NAME', String, 'Rename the data entry base name'
+	c.action do |args, options|
+		icon_name = args.first
+		if options.linux or options.android or options.rename
+			data = IconData.new DATA_JSON
+			data[icon_name].linux options.linux if options.linux
+			data[icon_name].android options.android if options.android
+			data.rename icon_name, options.rename if options.rename
+			data.save!
+		end
 	end
 end
 
