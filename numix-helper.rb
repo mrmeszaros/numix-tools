@@ -25,6 +25,15 @@ global_option('-n', '--notify', 'Send OS notification when the command finished'
 default_command :help
 
 
+def git_current_branch_name
+	branch_name = `git rev-parse --abbrev-ref HEAD`.strip
+	if branch_name == 'HEAD'
+		raise 'Currently not on a branch! Please specify the icon name'
+	else
+		branch_name
+	end
+end
+
 def puts_color color, fmt
 	puts fmt % {rgb: color.to_rgb.hex, hsl: color.css_hsl}
 end
@@ -164,7 +173,8 @@ command :data do |c|
 	c.option '-a', '--android=ENTRY', String, 'Add android entry (root or symlink)'
 	c.option '-r', '--rename=ICON_NAME', String, 'Rename the data entry base name'
 	c.action do |args, options|
-		icon_name = args.first
+		icon_name = args.first || git_current_branch_name
+
 		if options.linux or options.android or options.rename
 			data = IconData.new DATA_JSON
 			data[icon_name].linux options.linux if options.linux
@@ -187,7 +197,7 @@ command :render do |c|
 		options.default :size => [48], :shapes => SHAPES
 		sizes = options.size.map(&:to_i).sort.reverse
 
-		icon_names = [`git rev-parse --abbrev-ref HEAD`.strip] if icon_names.size < 1
+		icon_names = [git_current_branch_name] if icon_names.size < 1
 
 		icon_names.each do |icon_name|
 
