@@ -91,6 +91,11 @@ command :setup do |c|
 	c.option '-r', '--rename LINK_NAME', String, 'Rename the link (Defaults to ICON_NAME)'
 	c.option '-b', '--branch', 'Create git branch named LINK_NAME if not yet created'
 	c.action do |args, options|
+		if args.size < 1
+			puts 'Argument ICON_NAME missing. See command syntax:'
+			puts c.syntax
+			exit
+		end
 		icon_name = args.first
 		link_name = options.rename || icon_name
 		`git checkout -b #{link_name}` if options.branch && `git branch --list #{link_name}`.empty?
