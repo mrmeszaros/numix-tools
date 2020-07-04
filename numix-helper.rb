@@ -21,6 +21,7 @@ program :description, 'Helper scripts for Numix icon development'
 program :help, 'Author', 'Mészáros Máté Róbert <mateusz.meszaros@gmail.com>'
 
 global_option('-n', '--notify', 'Send OS notification when the command finished')
+global_option('-V', '--verbose', 'Show detailed command output')
 
 default_command :help
 
@@ -166,7 +167,7 @@ class IconData
 
 	def save!
 		@data = @data.sort_by{ |k,v| k.downcase }.to_h
-		json = JSON.pretty_generate @data, indent: "\t"
+		json = JSON.pretty_generate @data, indent: "    "
 		File.open(@file, 'w') { |file| file.write(json + "\n") }
 	end
 end
@@ -213,7 +214,10 @@ command :render do |c|
 					svg = "icons/#{shape}/48/#{icon_name}.svg"
 					png = "#{icon_name}.#{shape}.#{size}.png"
 					if File.file? svg
-						`inkscape #{svg} -e #{png} -w #{size}`
+						inkscape_output = `inkscape #{svg} -o #{png} -w #{size} 2>&1`
+						if options.verbose
+							puts inkscape_output
+						end
 						puts "... [DONE] #{png}" unless options.quiet
 						pngs[size].push png
 					else
