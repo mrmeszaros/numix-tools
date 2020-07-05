@@ -6,6 +6,7 @@ from colormath.color_conversions import convert_color
 # colormath
 # - seems needs system python - https://github.com/pyenv/pyenv/issues/1474
 # - mixing / blending is not supported - https://github.com/gtaylor/python-colormath/issues/4
+import subprocess
 from os import makedirs, symlink, system
 from os.path import exists
 from shutil import copy
@@ -35,6 +36,41 @@ def numix_setup(icon_name, create_branch):
 		link_path = f"ln/{icon_name}.{shape}.svg"
 		if not exists(link_path):
 			symlink(f"../{target}", link_path)
+
+
+def git_current_branch_name():
+	return subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode('utf-8').strip()
+
+
+def print_if(predicate, msg):
+	if predicate:
+		print(msg)
+
+
+@numix_helper.command('render')
+@click.argument('icon_names', nargs=-1)
+@click.option('sizes', '-s', '--size', help='Specify the resolution of the raster.', multiple=True, type=int, default=[48], show_default=True)
+@click.option('shapes', '-S', '--shape', help='Specify the shapes for which to render.', multiple=True, type=click.Choice(SHAPES), default=SHAPES, show_default=True)
+@click.option('bundle', '-B', '--bundle', help='Create bundle images with all the shapes', is_flag=True)
+@click.option('quiet', '-q', '--quiet', help='Diable all extraneous program output', is_flag=True)
+def numix_render(icon_names, sizes, shapes, bundle, quiet):
+	"""Render svg icons to raster images (png)"""
+	if bundle:
+		raise click.UsageError("Bundling is not implemented yet! Please contact the developer.")
+	if len(icon_names) < 1:
+		icon_names = [git_current_branch_name()]
+	for icon_name in icon_names:
+		print_if(not quiet, f"Rendering '{icon_name}' ...")
+		for size in sizes:
+			for shape in shapes:
+				svg = f"icons/{shape}/48/{icon_name}.svg"
+				png = f"{icon_name}.{shape}.{size}.png"
+				if exists(svg):
+					stdout = subprocess.check_output(["inkscape", svg, "-o", png, "-w", size, "2>&1"])
+					# TODO log if verbose
+					print_if(not quiet, f"... [DONE] {png}")
+				else:
+					print_if(not quiet, f"... [MISS] {png}")
 
 
 def add_or_replace(base_value, input_value):
