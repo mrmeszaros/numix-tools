@@ -6,11 +6,35 @@ from colormath.color_conversions import convert_color
 # colormath
 # - seems needs system python - https://github.com/pyenv/pyenv/issues/1474
 # - mixing / blending is not supported - https://github.com/gtaylor/python-colormath/issues/4
+from os import makedirs, symlink, system
+from os.path import exists
+from shutil import copy
 
 
 @click.group()
 def numix_helper():
 	pass
+
+
+SHAPES = ['circle', 'square']
+
+
+@numix_helper.command('setup')
+@click.argument('icon_name')
+# FIXME renaming this option to --git might make more sense, since we are asking to setup git too
+@click.option('create_branch', '-b', '--branch', help='Create and checkout git branch if not yet created', is_flag=True)
+def numix_setup(icon_name, create_branch):
+	"""Set up links, files and git for new icon development"""
+	if create_branch:
+		system(f"git checkout -b {icon_name}")
+	makedirs('ln', exist_ok=True)
+	for shape in SHAPES:
+		target = f"icons/{shape}/48/{icon_name}.svg"
+		if not exists(target):
+			copy(f"templates/{shape}/48.svg", target)
+		link_path = f"ln/{icon_name}.{shape}.svg"
+		if not exists(link_path):
+			symlink(f"../{target}", link_path)
 
 
 def add_or_replace(base_value, input_value):
