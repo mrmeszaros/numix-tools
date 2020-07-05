@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import click
+import json
 
 
 @click.group()
@@ -7,12 +8,62 @@ def numix_helper():
 	pass
 
 
+class IconEntry:
+	def __init__(self, entry):
+		self._entry = entry
+
+	def add_linux(self, name):
+		if 'linux' not in self._entry:
+			self._entry['linux'] = {'root': name}
+		else:
+			names = self._entry['linux'].get('symlinks', [])
+			names.append(name)
+			self._entry['linux']['symlinks'] = sorted(set(names))
+
+	def add_android(self, name):
+		names = self._entry.get('android', [])
+		names.append(name)
+		self._entry['android'] = sorted(set(names))
+
+
+class IconDataBase:
+	def __init__(self, file):
+		self._file = file
+		with open(file, 'r') as f:
+			self._data = json.load(f)
+
+	def __getitem__(self, name):
+		if name not in self._data:
+			self._data[name] = {}
+		return IconEntry(self._data[name])
+
+	def rename(self, name, new_name):
+		self._data[new_name] = self._data.pop(name)
+
+	def save(self):
+		with open(self._file, 'w') as f:
+			json.dump(self._data, f, indent=4, sort_keys=True)
+
+
 @numix_helper.command('data')
-def numix_data():
+@click.argument('icon_name')
+@click.option('linux_entry', '-l', '--linux', help='Add linux (desktop icon) entry.')
+@click.option('android_entry', '-a', '--android', help='Add android (app activity) entry.')
+@click.option('new_icon_name', '-r', '--rename', help='Rename the icon entry.')
+@click.option('registry_file', '-f', '--file', type=click.Path(exists=True), default='data.json', show_default=True, help='Use custom registry file.')
+def numix_data(icon_name, linux_entry, android_entry, new_icon_name, registry_file):
 	"""Add an entry to the icon name registry (data.json)"""
-	print('... Load data.json')
-	print('... Add linux/android entry')
-	print('... Save data.json')
+	if linux_entry or android_entry or new_icon_name:
+		db = IconDataBase(registry_file)
+		if linux_entry is not None:
+			db[icon_name].add_linux(linux_entry)
+		if android_entry is not None:
+			db[icon_name].add_android(android_entry)
+		if new_icon_name is not None:
+			db.rename(icon_name, new_icon_name)
+		db.save()
+	else:
+		print(f"Warning: no action specified, no changes made.")
 
 
 if __name__ == '__main__':
