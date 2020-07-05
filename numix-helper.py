@@ -17,6 +17,20 @@ def numix_helper():
 	pass
 
 
+# TODO: add global --version option
+# TODO: move --quiet option to a global level
+# TODO: add global -v/--verbose option
+# TODO: make render --size and --shape accept comma separated options
+# TODO: add autocompletion config
+# - https://click.palletsprojects.com/en/7.x/bashcomplete/#activation-script
+# TODO: add testing
+# - https://click.palletsprojects.com/en/7.x/api/#testing
+# TODO: try creating a point transformer (geometric transformations)
+# - https://click.palletsprojects.com/en/7.x/commands/#multi-command-pipelines
+# - check out the  in the geometry directory
+# TODO: implement blend command if colormath supports it
+
+
 SHAPES = ['circle', 'square']
 
 

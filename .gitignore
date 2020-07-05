@@ -1,2 +1,6 @@
 # Ignore Backup Copies from Text Editor
 *~
+
+# Python tmp files
+__pycache__
+*.pyc
