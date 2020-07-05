@@ -1,11 +1,49 @@
 #!/usr/bin/env python
 import click
 import json
+from colormath.color_objects import sRGBColor, HSLColor
+from colormath.color_conversions import convert_color
+# colormath
+# - seems needs system python - https://github.com/pyenv/pyenv/issues/1474
+# - mixing / blending is not supported - https://github.com/gtaylor/python-colormath/issues/4
 
 
 @click.group()
 def numix_helper():
 	pass
+
+
+def add_or_replace(base_value, input_value):
+	if input_value.startswith(('+', '-')):
+		return base_value + float(input_value)
+	return float(input_value)
+
+
+@numix_helper.command('color')
+@click.argument('hex_colors', nargs=-1)
+@click.option('hue', '-H', '--hue', help='Rotate the hue by/to the given value (0-360)')
+@click.option('saturation', '-S', '--saturation', help='Change the saturation by/to the given value (0-100)')
+@click.option('luminosity', '-L', '--luminosity', help='Change the luminosity by/to the given value (0-100)')
+def numix_color(hex_colors, hue, saturation, luminosity):
+	"""Change and display colors in various color spaces"""
+	for hex_color in hex_colors:
+		rgb = sRGBColor.new_from_rgb_hex(hex_color)
+		hsl = convert_color(rgb, HSLColor)
+		print(f'| {rgb.get_rgb_hex()} | hsl({hsl.hsl_h:.2f}, {hsl.hsl_s*100:.2f}%, {hsl.hsl_l*100:.2f}%) |')
+		if hue:
+			new_h = add_or_replace(hsl.hsl_h, hue)
+			# Rotate back to 0-360
+			hsl.hsl_h = new_h + 360*(new_h<0) - 360*(new_h>360)
+		if saturation:
+			new_s = add_or_replace(hsl.hsl_s*100, saturation)
+			# Cut and scale into 0-1
+			hsl.hsl_s = max(0, min(new_s, 100)) / 100
+		if luminosity:
+			new_l = add_or_replace(hsl.hsl_l*100, luminosity)
+			# Cut and scale into 0-1
+			hsl.hsl_l = max(0, min(new_l, 100)) / 100
+		rgb = convert_color(hsl, sRGBColor)
+		print(f'| {rgb.get_rgb_hex()} | hsl({hsl.hsl_h:.2f}, {hsl.hsl_s*100:.2f}%, {hsl.hsl_l*100:.2f}%) |')
 
 
 class IconEntry:
