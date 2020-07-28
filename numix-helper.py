@@ -6,7 +6,7 @@ from colormath.color_conversions import convert_color
 # colormath
 # - seems needs system python - https://github.com/pyenv/pyenv/issues/1474
 # - mixing / blending is not supported - https://github.com/gtaylor/python-colormath/issues/4
-import subprocess
+from subprocess import check_output, STDOUT
 from os import makedirs, symlink, system
 from os.path import exists, expanduser
 from shutil import copy
@@ -95,7 +95,7 @@ def numix_setup(icon_name, create_branch, desktop_name, original_name):
 
 
 def git_current_branch_name():
-	return subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode('utf-8').strip()
+	return check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode('utf-8').strip()
 
 
 def print_if(predicate, msg):
@@ -122,7 +122,7 @@ def numix_render(icon_names, sizes, shapes, bundle, quiet):
 				svg = f"icons/{shape}/48/{icon_name}.svg"
 				png = f"{icon_name}.{shape}.{size}.png"
 				if exists(svg):
-					stdout = subprocess.check_output(["inkscape", svg, "-o", png, "-w", size, "2>&1"])
+					stdout = check_output(["inkscape", svg, "-o", png, "-w", str(size)], stderr=STDOUT)
 					# TODO log if verbose
 					print_if(not quiet, f"... [DONE] {png}")
 				else:
