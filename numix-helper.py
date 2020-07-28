@@ -8,8 +8,9 @@ from colormath.color_conversions import convert_color
 # - mixing / blending is not supported - https://github.com/gtaylor/python-colormath/issues/4
 import subprocess
 from os import makedirs, symlink, system
-from os.path import exists
+from os.path import exists, expanduser
 from shutil import copy
+from glob import glob
 
 
 @click.group()
@@ -34,14 +35,30 @@ def numix_helper():
 SHAPES = ['circle', 'square']
 
 
+def find_icon(name):
+	prefix = f"{expanduser('~')}/.local/share/icons/hicolor"
+	paths = glob(f"{prefix}/*/apps/{name}.png")
+	size_map = {
+		int(path[len(prefix)+1:].split('x')[0]): path
+		for path in paths
+	}
+	return size_map[max(size_map.keys())]
+
+
 @numix_helper.command('setup')
 @click.argument('icon_name')
 # FIXME renaming this option to --git might make more sense, since we are asking to setup git too
 @click.option('create_branch', '-b', '--branch', help='Create and checkout git branch if not yet created', is_flag=True)
-def numix_setup(icon_name, create_branch):
+@click.option('original_name', '-o', '--original', help='Find the original icon and create a link')
+def numix_setup(icon_name, create_branch, original_name):
 	"""Set up links, files and git for new icon development"""
 	if create_branch:
 		system(f"git checkout -b {icon_name}")
+
+	if original_name is not None:
+		original_icon_path = find_icon(original_name)
+		symlink(original_icon_path, f"{icon_name}.original.png")
+
 	makedirs('ln', exist_ok=True)
 	for shape in SHAPES:
 		target = f"icons/{shape}/48/{icon_name}.svg"
