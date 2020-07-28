@@ -45,15 +45,40 @@ def find_icon(name):
 	return size_map[max(size_map.keys())]
 
 
+def get_desktop_file_icon_name(basename):
+	locations = [
+		f"{expanduser('~')}/.local/share/applications",
+		"/usr/share/applications"
+	]
+	existing_files = filter(
+		lambda path: exists(path),
+		(f"{l}/{basename}.desktop" for l in locations)
+	)
+	desktop_file = next(existing_files, None)
+	if not desktop_file:
+		raise Exception(f"No desktop file with basename '{basename}'!")
+
+	# got a desktop file
+	with open(desktop_file, "r") as file:
+		for line in file:
+			if line.startswith("Icon="):
+				return line[5:].strip()
+	raise Exception(f"No Icon line in desktop file '{desktop_file}'!")
+
+
 @numix_helper.command('setup')
 @click.argument('icon_name')
 # FIXME renaming this option to --git might make more sense, since we are asking to setup git too
 @click.option('create_branch', '-b', '--branch', help='Create and checkout git branch if not yet created', is_flag=True)
+@click.option('desktop_name', '-d', '--desktop', help='Find the original icon and create a line based on a desktop entry')
 @click.option('original_name', '-o', '--original', help='Find the original icon and create a link')
-def numix_setup(icon_name, create_branch, original_name):
+def numix_setup(icon_name, create_branch, desktop_name, original_name):
 	"""Set up links, files and git for new icon development"""
 	if create_branch:
 		system(f"git checkout -b {icon_name}")
+
+	if desktop_name is not None:
+		original_name = get_desktop_file_icon_name(desktop_name)
 
 	if original_name is not None:
 		original_icon_path = find_icon(original_name)
